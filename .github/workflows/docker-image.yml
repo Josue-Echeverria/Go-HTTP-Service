@@ -22,12 +22,14 @@ jobs:
       - name: Login to DockerHub
         uses: docker/login-action@v1
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
       - name: Build and push
         id: docker_build
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: josueechverriaa/go-http-service:latest
+          tags: |
+            josueechverriaa/go-http-service:latest
+            josueechverriaa/go-http-service:${{ needs.release.outputs.new_release_version }}
