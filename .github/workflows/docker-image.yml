@@ -28,5 +28,5 @@ jobs:
         with:
           push: true
           tags: |
-            josueechverriaa/go-http-service:latest
-            josueechverriaa/go-http-service:${{ needs.release.outputs.new_release_version }}
+            josueecheverriaa/go-http-service:latest
+            josueecheverriaa/go-http-service:${{ needs.release.outputs.new_release_version }}
