@@ -27,6 +27,4 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: |
-            josueecheverriaa/go-http-service:latest
-            josueecheverriaa/go-http-service:${{ needs.release.outputs.new_release_version }}
+          tags: josueecheverriaa/go-http-service:latest
