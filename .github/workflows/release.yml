@@ -7,13 +7,27 @@ on:
 
 jobs:
   release:
+    permissions:
+      contents: write
+
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # necesario para leer los tags
+          fetch-depth: 0
+          
+      - name: Set up uv and python
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: 3.13
 
-      - name: Release
+      - name: Run semantic-release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx semantic-release
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: | #shell
+          sr() {
+            uvx --from="python-semantic-release@9.21.1" semantic-release "$@"
+          }
+
+          sr version
+          sr publish

@@ -1,0 +1,12 @@
+[project]
+name = "go-http-service"
+version = "0.1.0"
+description = "A Go HTTP service"
+
+[tool.semantic_release]
+commit_parser = "conventional"
+version_toml = ["pyproject.toml:project.version"]
+allow_zero_version = true
+
+[tool.semantic_release.changelog.default_templates]
+changelog_file = "CHANGELOG.md"
