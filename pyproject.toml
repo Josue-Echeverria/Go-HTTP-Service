@@ -1,6 +1,6 @@
 [project]
 name = "go-http-service"
-version = "0.0.0"
+version = "0.1.0"
 description = "A Go HTTP service"
 
 [tool.semantic_release]
