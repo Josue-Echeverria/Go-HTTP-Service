@@ -18,6 +18,7 @@ type HTTPRequest struct {
 	Version string
 	Headers map[string]string
 	Body    string
+	Params  map[string]string
 }
 
 // HTTPResponse representa una respuesta HTTP
@@ -171,14 +172,29 @@ func (s *Server) parseRequest(conn net.Conn) (*HTTPRequest, error) {
 		return nil, fmt.Errorf("request line inválida")
 	}
 
+	paramsIndex := strings.Index(parts[1], "?")
+
 	req := &HTTPRequest{
 		Method:  parts[0],
-		Path:    parts[1],
+		Path:    parts[1][0:paramsIndex],
 		Version: parts[2],
 		Headers: make(map[string]string),
+		Params:  make(map[string]string),
 	}
 
-	// Leer headers
+	if paramsIndex != -1 {
+		// Parsear query string
+		queryString := parts[1][paramsIndex+1:]
+		for _, param := range strings.Split(queryString, "&") {
+			kv := strings.SplitN(param, "=", 2)
+			if len(kv) == 2 {
+				key := strings.TrimSpace(kv[0])
+				value := strings.TrimSpace(kv[1])
+				req.Params[key] = value
+			}
+		}
+	}
+
 	bytesRead := len(requestLine)
 	for {
 		line, err := reader.ReadString('\n')

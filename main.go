@@ -28,6 +28,9 @@ func main() {
 	srv.HandleFunc("GET", "/ping", handlers.PingHandler)
 	srv.HandleFunc("GET", "/time", handlers.TimeHandler)
 
+	// Rutas basicas
+	srv.HandleFunc("GET", "/fibonacci", handlers.FibonacciHandler)
+
 	// Iniciar servidor
 	if err := srv.Start(); err != nil {
 		log.Fatalf("Error iniciando servidor: %v", err)
