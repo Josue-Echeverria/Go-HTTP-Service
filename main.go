@@ -26,10 +26,27 @@ func main() {
 	srv.HandleFunc("GET", "/echo", handlers.EchoHandler)
 	srv.HandleFunc("POST", "/echo", handlers.EchoHandler)
 	srv.HandleFunc("GET", "/ping", handlers.PingHandler)
-	srv.HandleFunc("GET", "/time", handlers.TimeHandler)
+	srv.HandleFunc("GET", "/time", handlers.TimeHandler) // /time
 
 	// Rutas basicas
-	srv.HandleFunc("GET", "/fibonacci", handlers.FibonacciHandler)
+	srv.HandleFunc("GET", "/fibonacci", handlers.FibonacciHandler) // /fibonacci?num=N
+	srv.HandleFunc("POST", "/file", handlers.CreateFileHandler) // /createFile?name=filename&content=text&repeat=x
+	srv.HandleFunc("DELETE", "/file", handlers.DeleteFileHandler) // /deleteFile?name=filename
+	srv.HandleFunc("PUT", "/reverse", handlers.ReverseHandler) // /reverse?text=yourtext
+	srv.HandleFunc("PUT", "/toupper", handlers.ToUpperHandler) // /toupper?text=yourtext
+	srv.HandleFunc("GET", "/random", handlers.RandomNumberHandler) // /random?min=x&max=y
+	srv.HandleFunc("PUT", "/hash", handlers.HashHandler) // /hash?text=yourtext
+	srv.HandleFunc("POST", "/simulate", handlers.SimulateHandler) // /simulate?seconds=s&task=name
+	srv.HandleFunc("POST", "/sleep", handlers.SleepHandler) // /sleep?seconds=s
+	srv.HandleFunc("POST", "/loadtest", handlers.LoadTestHandler) // /loadtest?tasks=n&sleep=x
+	srv.HandleFunc("GET", "/help", handlers.HelpHandler) // /help
+
+	// CPU-bound
+	srv.HandleFunc("GET", "/isprime", handlers.IsPrimeHandler) // /isprime?num=N
+	srv.HandleFunc("GET", "/factor", handlers.FactorHandler) // /factor?num=N
+	srv.HandleFunc("GET", "/pi", handlers.PiHandler) // /pi?digits=N
+	srv.HandleFunc("GET", "/mandelbrot", handlers.MandelbrotHandler) // /mandelbrot?width=W&height=H&max_iter=I
+	srv.HandleFunc("GET", "/matrixmul", handlers.MatrixMulHandler) // /matrixmul?size=N&seed=S
 
 	// Iniciar servidor
 	if err := srv.Start(); err != nil {

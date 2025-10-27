@@ -174,9 +174,15 @@ func (s *Server) parseRequest(conn net.Conn) (*HTTPRequest, error) {
 
 	paramsIndex := strings.Index(parts[1], "?")
 
+	// Safely determine the path portion (avoid slicing with -1)
+	path := parts[1]
+	if paramsIndex != -1 {
+		path = parts[1][:paramsIndex]
+	}
+
 	req := &HTTPRequest{
 		Method:  parts[0],
-		Path:    parts[1][0:paramsIndex],
+		Path:    path,
 		Version: parts[2],
 		Headers: make(map[string]string),
 		Params:  make(map[string]string),

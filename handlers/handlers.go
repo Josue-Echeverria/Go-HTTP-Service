@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"time"
-	"strconv"
 	"GoDocker/server"
 )
 
@@ -114,53 +113,6 @@ func TimeHandler(req *server.HTTPRequest) *server.HTTPResponse {
 	}
 
 	jsonData, _ := json.MarshalIndent(timeData, "", "  ")
-
-	return &server.HTTPResponse{
-		StatusCode: 200,
-		StatusText: "OK",
-		Body:       string(jsonData),
-		Headers: map[string]string{
-			"Content-Type": "application/json",
-		},
-	}
-}
-
-
-// FibonacciHandler maneja peticiones a /fibonacci?n=<n>
-func FibonacciHandler(req *server.HTTPRequest) *server.HTTPResponse {
-	n, _ := strconv.Atoi(req.Params["n"])
-	
-	val, ok := req.Params["n"]
-	if !ok || val == "" {
-		return &server.HTTPResponse{
-			StatusCode: 400,
-			StatusText: "Bad Request",
-			Body:       `{"error":"missing required query parameter 'n'"}`,
-			Headers: map[string]string{
-				"Content-Type": "application/json",
-			},
-		}
-	}
-
-	const maxN = 1000
-	if n > maxN {
-		return &server.HTTPResponse{
-			StatusCode: 413,
-			StatusText: "Payload Too Large",
-			Body:       `{"error":"n too large; maximum allowed is 1000"}`,
-			Headers: map[string]string{
-				"Content-Type": "application/json",
-			},
-		}
-	}
-
-	fibSeq := make([]int, n)
-	fibSeq[0], fibSeq[1] = 0, 1
-	for i := 2; i < n; i++ {
-		fibSeq[i] = fibSeq[i-1] + fibSeq[i-2]
-	}
-
-	jsonData, _ := json.MarshalIndent(fibSeq, "", "  ")
 
 	return &server.HTTPResponse{
 		StatusCode: 200,

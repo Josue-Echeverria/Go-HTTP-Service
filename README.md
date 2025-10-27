@@ -169,15 +169,6 @@ Parser manual que:
 - Lee body según Content-Length
 - Maneja errores y límites de tamaño
 
-## Restricciones Cumplidas
-
-✅ **Sin `net/http`**: Solo usa `net` y `bufio`  
-✅ **Código desde cero**: Parser HTTP manual  
-✅ **Pools y colas thread-safe**: `WorkerPool` y `TaskQueue`  
-✅ **Sin `sleep()`**: Usa canales y select  
-✅ **Recursos seguros**: Mutex y atomic  
-✅ **Modular**: Separación clara de responsabilidades  
-✅ **Cobertura ≥90%**: Tests exhaustivos
 
 ## Ejemplos de Uso
 
