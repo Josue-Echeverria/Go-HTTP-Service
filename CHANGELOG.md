@@ -1,7 +1,15 @@
 # CHANGELOG
 
 
+## v1.0.1 (2025-10-28)
+
+
 ## v1.0.0 (2025-10-27)
+
+### Bug Fixes
+
+- Fixed some tests and added the last basic endpoints
+  ([`2108a9c`](https://github.com/Josue-Echeverria/Go-HTTP-Service/commit/2108a9c877f0ece1219b81e0a23a8ecd9bebe438))
 
 ### Features
 
