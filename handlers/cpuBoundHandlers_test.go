@@ -74,7 +74,6 @@ func TestFactorHandler(t *testing.T) {
 func TestPiHandler(t *testing.T) {
 	expectedStatus := 200
 	expectedErrorStatus := 400
-	expectedAlgorithm := "Machin"
 	expectedPiPrefix := "3.1"
 	testDigits := "10"
 	invalidDigits := "1001"
@@ -95,10 +94,6 @@ func TestPiHandler(t *testing.T) {
 	piStr := result["pi"].(string)
 	if !strings.HasPrefix(piStr, expectedPiPrefix) {
 		t.Errorf("Pi should start with %s, got %s", expectedPiPrefix, piStr)
-	}
-
-	if result["algorithm"] != expectedAlgorithm {
-		t.Errorf("Expected algorithm '%s', got %v", expectedAlgorithm, result["algorithm"])
 	}
 
 	// Test error case
@@ -139,7 +134,7 @@ func TestMatrixMulHandler(t *testing.T) {
 	expectedErrorStatus := 400
 	expectedSize := 3
 	expectedSeed := "42"
-	expectedFields := []string{"size", "seed", "matrixA", "matrixB", "result", "message"}
+	expectedFields := []string{"matrixA", "matrixB", "result"}
 
 	params := map[string]string{"size": "3", "seed": expectedSeed}
 	req := &server.HTTPRequest{

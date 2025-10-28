@@ -353,7 +353,12 @@ func HashHandler(req *server.HTTPRequest) *server.HTTPResponse {
 		hash = ((hash << 5) + hash) + uint32(char)
 	}
 
-	jsonData, _ := json.MarshalIndent(hash, "", "  ")
+	response := map[string]interface{}{
+		"hash":      hash,
+		"text":      text,
+	}
+
+	jsonData, _ := json.MarshalIndent(response, "", "  ")
 
 	return &server.HTTPResponse{
 		StatusCode: 200,
@@ -380,12 +385,42 @@ func SimulateHandler(req *server.HTTPRequest) *server.HTTPResponse {
 		}
 	}
 
-	// TODO : Implementar lógica de simulación de carga
+	seconds, err := strconv.Atoi(secondsStr)
+	if err != nil || seconds < 1 || seconds > 10 {
+		return &server.HTTPResponse{
+			StatusCode: 400,
+			StatusText: "Bad Request",
+			Body:       `{"error":"seconds must be between 1 and 10"}`,
+			Headers: map[string]string{
+				"Content-Type": "application/json",
+			},
+		}
+	}
 
-	jsonData, _ := json.MarshalIndent(map[string]string{"task": task, "seconds": secondsStr}, "", "  ")
+	startTime := time.Now()
+	targetDuration := time.Duration(seconds) * time.Second
+	var operations int64
+
+	// Simulación simple con operaciones básicas
+	for time.Since(startTime) < targetDuration {
+		for i := 0; i < 1000; i++ {
+			_ = float64(i) * 3.14159
+			operations++
+		}
+	}
+
+	elapsed := time.Since(startTime)
+	response := map[string]interface{}{
+		"status":     "completed",
+		"task":       task,
+		"duration":   elapsed.String(),
+		"operations": operations,
+	}
+
+	jsonData, _ := json.MarshalIndent(response, "", "  ")
 
 	return &server.HTTPResponse{
-		StatusCode: 400,
+		StatusCode: 200,
 		StatusText: "OK",
 		Body:       string(jsonData),
 		Headers: map[string]string{
@@ -408,12 +443,47 @@ func SleepHandler(req *server.HTTPRequest) *server.HTTPResponse {
 		}
 	}
 
-	// TODO : Implementar lógica de sleep
-	jsonData, _ := json.MarshalIndent(map[string]string{"seconds": secondsStr}, "", "  ")
+	seconds, err := strconv.Atoi(secondsStr)
+	if err != nil || seconds < 1 || seconds > 60 {
+		return &server.HTTPResponse{
+			StatusCode: 400,
+			StatusText: "Bad Request",
+			Body:       `{"error":"seconds must be between 1 and 60"}`,
+			Headers: map[string]string{
+				"Content-Type": "application/json",
+			},
+		}
+	}
 
+	startTime := time.Now()
+	targetDuration := time.Duration(seconds) * time.Second
+
+	// Simular "espera" usando busy-wait con operaciones ligeras
+	var iterations int64
+	for time.Since(startTime) < targetDuration {
+		// Operaciones muy ligeras para simular espera sin usar sleep
+		for i := 0; i < 1000; i++ {
+			iterations++
+			// Operación mínima para evitar optimización del compilador
+			_ = iterations % 2
+		}
+	}
+
+	elapsed := time.Since(startTime)
+
+	response := map[string]interface{}{
+		"status":          "completed",
+		"requested_sleep": secondsStr + "s",
+		"actual_duration": elapsed.String(),
+		"iterations":      iterations,
+		"method":          "busy-wait simulation",
+		"note":            "Simulated sleep without blocking thread",
+	}
+
+	jsonData, _ := json.MarshalIndent(response, "", "  ")
 
 	return &server.HTTPResponse{
-		StatusCode: 400,
+		StatusCode: 200,
 		StatusText: "OK",
 		Body:       string(jsonData),
 		Headers: map[string]string{
@@ -437,11 +507,66 @@ func LoadTestHandler(req *server.HTTPRequest) *server.HTTPResponse {
 		}
 	}
 
-	// TODO : Implementar lógica de prueba de carga
-	jsonData, _ := json.MarshalIndent(map[string]string{"tasks": tasksStr, "sleep": sleepStr}, "", "  ")
+	tasks, err := strconv.Atoi(tasksStr)
+	if err != nil || tasks < 1 || tasks > 100 {
+		return &server.HTTPResponse{
+			StatusCode: 400,
+			StatusText: "Bad Request",
+			Body:       `{"error":"tasks must be between 1 and 100"}`,
+			Headers: map[string]string{
+				"Content-Type": "application/json",
+			},
+		}
+	}
+
+	sleepMs, err := strconv.Atoi(sleepStr)
+	if err != nil || sleepMs < 0 || sleepMs > 1000 {
+		return &server.HTTPResponse{
+			StatusCode: 400,
+			StatusText: "Bad Request",
+			Body:       `{"error":"sleep must be between 0 and 1000 milliseconds"}`,
+			Headers: map[string]string{
+				"Content-Type": "application/json",
+			},
+		}
+	}
+
+	startTime := time.Now()
+	var totalOperations int64
+
+	// Ejecutar tareas simples
+	for taskID := 1; taskID <= tasks; taskID++ {
+		// Trabajo simple por tarea
+		for i := 0; i < 1000; i++ {
+			_ = float64(i*taskID) * 2.0
+			totalOperations++
+		}
+
+		// Simular sleep si se especifica
+		if sleepMs > 0 {
+			sleepStart := time.Now()
+			targetSleep := time.Duration(sleepMs) * time.Millisecond
+			for time.Since(sleepStart) < targetSleep {
+				_ = totalOperations % 2 // Operación mínima
+			}
+		}
+	}
+
+	totalDuration := time.Since(startTime)
+
+	response := map[string]interface{}{
+		"status":           "completed",
+		"total_tasks":      tasks,
+		"sleep_per_task":   sleepStr + "ms",
+		"total_duration":   totalDuration.String(),
+		"total_operations": totalOperations,
+		"tasks_per_second": float64(tasks) / totalDuration.Seconds(),
+	}
+
+	jsonData, _ := json.MarshalIndent(response, "", "  ")
 
 	return &server.HTTPResponse{
-		StatusCode: 400,
+		StatusCode: 200,
 		StatusText: "OK",
 		Body:       string(jsonData),
 		Headers: map[string]string{
