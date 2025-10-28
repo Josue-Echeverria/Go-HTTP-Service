@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v1.0.0 (2025-10-27)
+
+### Features
+
+- 90% CPU Bound endpoints and 80% Basic endpoints implemented
+  ([`455988d`](https://github.com/Josue-Echeverria/Go-HTTP-Service/commit/455988d7f442df9946e683e49c48a06842198c6c))
+
+
 ## v0.1.0 (2025-10-24)
 
 ### Documentation
