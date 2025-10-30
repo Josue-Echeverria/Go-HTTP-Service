@@ -148,8 +148,8 @@ func TimeHandler(req *server.HTTPRequest) *server.HTTPResponse {
 // SortFileHandler ordena números enteros en el archivo indicado.
 // Query params: name=FILE, algo=merge|quick (quick = in-memory, merge -> also in-memory here but placeholder)
 func SortFileHandler(req *server.HTTPRequest) *server.HTTPResponse {
-	filename := req.Query.Get("name")
-	algo := req.Query.Get("algo")
+	filename := req.Params["name"]
+	algo, _ := req.Params["algo"]
 	if filename == "" {
 		return &server.HTTPResponse{StatusCode: 400, StatusText: "Bad Request", Body: `{"error":"missing name parameter"}`, Headers: map[string]string{"Content-Type": "application/json"}}
 	}
@@ -214,7 +214,7 @@ func SortFileHandler(req *server.HTTPRequest) *server.HTTPResponse {
 
 // WordCountHandler cuenta líneas, palabras y bytes (wc-like)
 func WordCountHandler(req *server.HTTPRequest) *server.HTTPResponse {
-	filename := req.Query.Get("name")
+	filename, _ := req.Params["name"]
 	if filename == "" {
 		return &server.HTTPResponse{StatusCode: 400, StatusText: "Bad Request", Body: `{"error":"missing name parameter"}`, Headers: map[string]string{"Content-Type": "application/json"}}
 	}
@@ -266,8 +266,8 @@ func WordCountHandler(req *server.HTTPRequest) *server.HTTPResponse {
 
 // GrepHandler busca un patrón regex en el archivo y devuelve número de coincidencias y primeras 10 líneas coincidentes
 func GrepHandler(req *server.HTTPRequest) *server.HTTPResponse {
-	filename := req.Query.Get("name")
-	pattern := req.Query.Get("pattern")
+	filename, _ := req.Params["name"]
+	pattern, _ := req.Params["pattern"]
 	if filename == "" || pattern == "" {
 		return &server.HTTPResponse{StatusCode: 400, StatusText: "Bad Request", Body: `{"error":"missing name or pattern parameter"}`, Headers: map[string]string{"Content-Type": "application/json"}}
 	}
@@ -309,8 +309,8 @@ func GrepHandler(req *server.HTTPRequest) *server.HTTPResponse {
 
 // CompressHandler comprime un archivo usando gzip o xz (si xz está disponible)
 func CompressHandler(req *server.HTTPRequest) *server.HTTPResponse {
-	filename := req.Query.Get("name")
-	codec := req.Query.Get("codec")
+	filename, _ := req.Params["name"]
+	codec, _ := req.Params["codec"]
 	if filename == "" || codec == "" {
 		return &server.HTTPResponse{StatusCode: 400, StatusText: "Bad Request", Body: `{"error":"missing name or codec parameter"}`, Headers: map[string]string{"Content-Type": "application/json"}}
 	}
@@ -372,8 +372,8 @@ func CompressHandler(req *server.HTTPRequest) *server.HTTPResponse {
 
 // HashFileHandler calcula hash (sha256) de un archivo
 func HashFileHandler(req *server.HTTPRequest) *server.HTTPResponse {
-	filename := req.Query.Get("name")
-	algo := req.Query.Get("algo")
+	filename, _ := req.Params["name"]
+	algo, _ := req.Params["algo"]
 	if filename == "" || algo == "" {
 		return &server.HTTPResponse{StatusCode: 400, StatusText: "Bad Request", Body: `{"error":"missing name or algo parameter"}`, Headers: map[string]string{"Content-Type": "application/json"}}
 	}

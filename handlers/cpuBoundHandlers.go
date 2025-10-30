@@ -9,8 +9,7 @@ import (
 
 // /isprime?num=N
 func IsPrimeHandler(req *server.HTTPRequest) *server.HTTPResponse {
-	numStr := req.Query.Get("num")
-	_, ok := req.Query["num"]
+	numStr, ok := req.Params["num"]
 	if !ok || numStr == "" {
 		return &server.HTTPResponse{
 			StatusCode: 400,
@@ -60,8 +59,7 @@ func IsPrimeHandler(req *server.HTTPRequest) *server.HTTPResponse {
 
 // /factor?num=N
 func FactorHandler(req *server.HTTPRequest) *server.HTTPResponse {
-	numStr := req.Query.Get("num")
-	_, ok := req.Query["num"]
+	numStr, ok := req.Params["num"]
 	if !ok || numStr == "" {
 		return &server.HTTPResponse{
 			StatusCode: 400,
@@ -189,8 +187,7 @@ func arctanSeries(x int, precision uint, terms int) *big.Float {
 
 // /pi?digits=N
 func PiHandler(req *server.HTTPRequest) *server.HTTPResponse {
-	numStr := req.Query.Get("digits")
-	_, ok := req.Query["digits"]
+	numStr, ok := req.Params["digits"]
 	if !ok || numStr == "" {
 		return &server.HTTPResponse{
 			StatusCode: 400,
@@ -249,10 +246,8 @@ func MandelbrotHandler(req *server.HTTPRequest) *server.HTTPResponse {
 
 // /matrixmul?size=N&seed=S
 func MatrixMulHandler(req *server.HTTPRequest) *server.HTTPResponse {
-	sizeStr := req.Query.Get("size")
-	_, sizeOk := req.Query["size"]
-	seedStr := req.Query.Get("seed")
-	_, seedOk := req.Query["seed"]
+	sizeStr, sizeOk := req.Params["size"]
+	seedStr, seedOk := req.Params["seed"]
 
 	if !sizeOk || !seedOk {
 		return &server.HTTPResponse{

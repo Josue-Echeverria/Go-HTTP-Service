@@ -7,7 +7,6 @@ import (
 	"io"
 	"log"
 	"net"
-	"net/url"
 	"strconv"
 	"strings"
 	"sync"
@@ -21,7 +20,7 @@ type HTTPRequest struct {
 	Version string
 	Headers map[string]string
 	Body    string
-	Query   url.Values
+	Params  map[string]string
 }
 
 // HTTPResponse representa una respuesta HTTP
@@ -151,6 +150,12 @@ func (s *Server) parseRequest(conn net.Conn) (*HTTPRequest, error) {
 		return nil, fmt.Errorf("empty request line")
 	}
 
+	// Parsear method, path, version
+	parts := strings.Fields(line)
+	if len(parts) != 3 {
+		return nil, fmt.Errorf("malformed request line: %s", line)
+	}
+
 	paramsIndex := strings.Index(parts[1], "?")
 
 	// Safely determine the path portion (avoid slicing with -1)
@@ -180,7 +185,7 @@ func (s *Server) parseRequest(conn net.Conn) (*HTTPRequest, error) {
 		}
 	}
 
-	bytesRead := len(requestLine)
+	// Leer headers
 	for {
 		headerLineBytes, _, err := reader.ReadLine()
 		if err != nil {
@@ -196,17 +201,17 @@ func (s *Server) parseRequest(conn net.Conn) (*HTTPRequest, error) {
 		}
 
 		// Parsear header
-		parts := strings.SplitN(line, ":", 2)
-		if len(parts) == 2 {
-			key := strings.TrimSpace(parts[0])
-			value := strings.TrimSpace(parts[1])
-			headers[key] = value
+		headerParts := strings.SplitN(line, ":", 2)
+		if len(headerParts) == 2 {
+			key := strings.TrimSpace(headerParts[0])
+			value := strings.TrimSpace(headerParts[1])
+			req.Headers[key] = value
 		}
 	}
 
 	// Leer body si existe Content-Length
 	body := ""
-	if contentLengthStr, ok := headers["Content-Length"]; ok {
+	if contentLengthStr, ok := req.Headers["Content-Length"]; ok {
 		contentLength, err := strconv.Atoi(contentLengthStr)
 		if err == nil && contentLength > 0 {
 			bodyBytes := make([]byte, contentLength)
@@ -218,40 +223,8 @@ func (s *Server) parseRequest(conn net.Conn) (*HTTPRequest, error) {
 		}
 	}
 
-	return &HTTPRequest{
-		Method:  method,
-		Path:    path,
-		Version: version,
-		Headers: headers,
-		Body:    body,
-		Params:  queryParams,
-	}, nil
-}
-
-// parsePathAndQuery separa el path de los query parameters
-func (s *Server) parsePathAndQuery(fullPath string) (string, map[string]string) {
-	queryParams := make(map[string]string)
-
-	if idx := strings.Index(fullPath, "?"); idx != -1 {
-		path := fullPath[:idx]
-		queryString := fullPath[idx+1:]
-
-		// Parsear query parameters
-		pairs := strings.Split(queryString, "&")
-		for _, pair := range pairs {
-			if idx := strings.Index(pair, "="); idx != -1 {
-				key := strings.TrimSpace(pair[:idx])
-				value := strings.TrimSpace(pair[idx+1:])
-				if key != "" {
-					queryParams[key] = value
-				}
-			}
-		}
-
-		return path, queryParams
-	}
-
-	return fullPath, queryParams
+	req.Body = body
+	return req, nil
 }
 
 // processConnection procesa una conexión individual con mejor error handling

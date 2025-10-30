@@ -34,8 +34,7 @@ func randomInRange(min, max int) int {
 
 // /fibonacci?n=<n>
 func FibonacciHandler(req *server.HTTPRequest) *server.HTTPResponse {
-	val := req.Query.Get("n")
-	_, ok := req.Query["n"]
+	val, ok := req.Params["n"]
 	if !ok || val == "" {
 		return &server.HTTPResponse{
 			StatusCode: 400,
@@ -98,12 +97,9 @@ func FibonacciHandler(req *server.HTTPRequest) *server.HTTPResponse {
 
 // /createFile?name=filename&content=text&repeat=x
 func CreateFileHandler(req *server.HTTPRequest) *server.HTTPResponse {
-	name := req.Query.Get("name")
-	_, nameOk := req.Query["name"]
-	content := req.Query.Get("content")
-	_, contentOk := req.Query["content"]
-	repeatStr := req.Query.Get("repeat")
-	_, repeatOk := req.Query["repeat"]
+	name, nameOk := req.Params["name"]
+	content, contentOk := req.Params["content"]
+	repeatStr, repeatOk := req.Params["repeat"]
 
 	if !nameOk || !contentOk || !repeatOk {
 		return &server.HTTPResponse{
@@ -168,8 +164,7 @@ func CreateFileHandler(req *server.HTTPRequest) *server.HTTPResponse {
 
 // /deleteFile?name=filename
 func DeleteFileHandler(req *server.HTTPRequest) *server.HTTPResponse {
-	name := req.Query.Get("name")
-	_, nameOk := req.Query["name"]
+	name, nameOk := req.Params["name"]
 	if !nameOk || name == "" {
 		return &server.HTTPResponse{
 			StatusCode: 400,
@@ -205,8 +200,7 @@ func DeleteFileHandler(req *server.HTTPRequest) *server.HTTPResponse {
 
 // /reverse?text=yourtext
 func ReverseHandler(req *server.HTTPRequest) *server.HTTPResponse {
-	text := req.Query.Get("text")
-	_, textOk := req.Query["text"]
+	text, textOk := req.Params["text"]
 	if !textOk {
 		return &server.HTTPResponse{
 			StatusCode: 400,
@@ -236,8 +230,7 @@ func ReverseHandler(req *server.HTTPRequest) *server.HTTPResponse {
 
 // /toupper?text=yourtext
 func ToUpperHandler(req *server.HTTPRequest) *server.HTTPResponse {
-	text := req.Query.Get("text")
-	_, textOk := req.Query["text"]
+	text, textOk := req.Params["text"]
 	if !textOk {
 		return &server.HTTPResponse{
 			StatusCode: 400,
@@ -264,10 +257,8 @@ func ToUpperHandler(req *server.HTTPRequest) *server.HTTPResponse {
 
 // /random?min=x&max=y
 func RandomNumberHandler(req *server.HTTPRequest) *server.HTTPResponse {
-	minStr := req.Query.Get("min")
-	_, minOk := req.Query["min"]
-	maxStr := req.Query.Get("max")
-	_, maxOk := req.Query["max"]
+	minStr, minOk := req.Params["min"]
+	maxStr, maxOk := req.Params["max"]
 	if !minOk || !maxOk {
 		return &server.HTTPResponse{
 			StatusCode: 400,
@@ -343,8 +334,7 @@ func RandomNumberHandler(req *server.HTTPRequest) *server.HTTPResponse {
 
 // /hash?text=yourtext
 func HashHandler(req *server.HTTPRequest) *server.HTTPResponse {
-	text := req.Query.Get("text")
-	_, textOk := req.Query["text"]
+	text, textOk := req.Params["text"]
 	if !textOk {
 		return &server.HTTPResponse{
 			StatusCode: 400,
@@ -381,10 +371,8 @@ func HashHandler(req *server.HTTPRequest) *server.HTTPResponse {
 
 // /simulate?seconds=s&task=name
 func SimulateHandler(req *server.HTTPRequest) *server.HTTPResponse {
-	secondsStr := req.Query.Get("seconds")
-	_, secondsOk := req.Query["seconds"]
-	task := req.Query.Get("task")
-	_, taskOk := req.Query["task"]
+	secondsStr, secondsOk := req.Params["seconds"]
+	task, taskOk := req.Params["task"]
 	if !secondsOk || !taskOk {
 		return &server.HTTPResponse{
 			StatusCode: 400,
@@ -412,7 +400,7 @@ func SimulateHandler(req *server.HTTPRequest) *server.HTTPResponse {
 	targetDuration := time.Duration(seconds) * time.Second
 	var operations int64
 
-	// Simulación 
+	// Simulación
 	for time.Since(startTime) < targetDuration {
 		for i := 0; i < 1000; i++ {
 			_ = float64(i) * 3.14159
@@ -442,8 +430,7 @@ func SimulateHandler(req *server.HTTPRequest) *server.HTTPResponse {
 
 // /sleep?seconds=s
 func SleepHandler(req *server.HTTPRequest) *server.HTTPResponse {
-	secondsStr := req.Query.Get("seconds")
-	_, secondsOk := req.Query["seconds"]
+	secondsStr, secondsOk := req.Params["seconds"]
 	if !secondsOk {
 		return &server.HTTPResponse{
 			StatusCode: 400,
@@ -506,10 +493,8 @@ func SleepHandler(req *server.HTTPRequest) *server.HTTPResponse {
 
 // /loadtest?tasks=n&sleep=x
 func LoadTestHandler(req *server.HTTPRequest) *server.HTTPResponse {
-	tasksStr := req.Query.Get("tasks")
-	_, tasksOk := req.Query["tasks"]
-	sleepStr := req.Query.Get("sleep")
-	_, sleepOk := req.Query["sleep"]
+	tasksStr, tasksOk := req.Params["tasks"]
+	sleepStr, sleepOk := req.Params["sleep"]
 	if !tasksOk || !sleepOk {
 		return &server.HTTPResponse{
 			StatusCode: 400,
