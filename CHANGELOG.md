@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v1.1.0 (2025-10-30)
+
+### Features
+
+- Io-bound endpoints
+  ([`a1f08c0`](https://github.com/Josue-Echeverria/Go-HTTP-Service/commit/a1f08c0a1aee48fd940f3911e15bfe634af4aa5e))
+
+
 ## v1.0.1 (2025-10-28)
 
 
