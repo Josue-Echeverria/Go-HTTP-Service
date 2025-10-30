@@ -412,7 +412,7 @@ func SimulateHandler(req *server.HTTPRequest) *server.HTTPResponse {
 	targetDuration := time.Duration(seconds) * time.Second
 	var operations int64
 
-	// Simulación simple con operaciones básicas
+	// Simulación 
 	for time.Since(startTime) < targetDuration {
 		for i := 0; i < 1000; i++ {
 			_ = float64(i) * 3.14159
