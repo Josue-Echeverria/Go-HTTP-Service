@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v1.1.1 (2025-10-30)
+
+### Bug Fixes
+
+- Fixed basic issues w server params handling
+  ([`78f7172`](https://github.com/Josue-Echeverria/Go-HTTP-Service/commit/78f7172d6f262467de0c685a67c027c793d510ea))
+
+
 ## v1.1.0 (2025-10-30)
 
 ### Features
