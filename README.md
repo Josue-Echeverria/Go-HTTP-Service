@@ -283,3 +283,56 @@ taskQueue: NewTaskQueue(2000),
 ## Licencia
 
 MIT
+
+## Endpoints IO-bound (procesamiento intensivo)
+
+Se agregan endpoints para probar carga I/O y procesamiento en archivos grandes. Todos aceptan parámetros por query string.
+
+- `GET /sortfile?name=FILE&algo=merge|quick`
+  - Ordena un archivo que contiene números enteros (uno por línea). `algo=quick` usa ordenamiento en memoria (rápido para archivos moderados). `algo=merge` está previsto para merge-external, actualmente utiliza también una ordenación eficiente en memoria.
+  - Recomendado para archivos >= 50MB; el handler procesa la entrada en streaming y escribe un archivo de salida `FILE.sorted`.
+  - Respuesta JSON con nombre del archivo de salida, cantidad de números procesados y duración en ms.
+
+- `GET /wordcount?name=FILE`
+  - Cuenta líneas, palabras y bytes (equivalente a `wc`). Diseñado para archivos grandes: lectura por bloques y conteo en streaming.
+  - Respuesta JSON: `{ "lines": ..., "words": ..., "bytes": ... }`.
+
+- `GET /grep?name=FILE&pattern=REGEX`
+  - Busca un patrón regex en el archivo y devuelve el número total de coincidencias y las primeras 10 líneas que coinciden.
+  - Útil para validar patrones en archivos grandes sin cargarlos completamente en memoria.
+
+- `GET /compress?name=FILE&codec=gzip|xz`
+  - Comprime el archivo usando `gzip` (usando librería estándar) o `xz` (si `xz` está instalado en el sistema). El resultado se guarda en `FILE.gz` o `FILE.xz`.
+  - Respuesta JSON con nombre de salida y tamaño en bytes.
+  - Nota: para `xz` el servidor invoca la utilidad externa `xz` (debe estar disponible en PATH).
+
+- `GET /hashfile?name=FILE&algo=sha256`
+  - Calcula el hash del archivo con sha256 (lectura en streaming). Retorna el hash en hexadecimal.
+
+Buenas prácticas y limitaciones
+- Asegúrate de que el usuario que ejecuta el servidor tenga permisos de lectura/escritura sobre los archivos indicados.
+- Para archivos muy grandes (> a varios cientos de MB) la opción `quick` podría consumir bastante RAM; si trabajas con archivos enormes considera implementar una variante de "external merge" (dividir en chunks, ordenar cada uno, y luego hacer k-way merge).
+- `xz` debe estar instalado si quieres usar `codec=xz`.
+
+Ejemplos (curl)
+
+```bash
+# Ordenar un archivo
+curl "http://localhost:8080/sortfile?name=/data/bignums.txt&algo=quick"
+
+# Contar palabras y líneas
+curl "http://localhost:8080/wordcount?name=/data/biglog.txt"
+
+# Buscar regex
+curl "http://localhost:8080/grep?name=/data/biglog.txt&pattern=Error"
+
+# Comprimir con gzip
+curl "http://localhost:8080/compress?name=/data/bigfile.txt&codec=gzip"
+
+# Calcular sha256
+curl "http://localhost:8080/hashfile?name=/data/bigfile.txt&algo=sha256"
+```
+
+Implementación y ayuda
+- Las funciones realizan E/S en streaming y evitan cargar innecesariamente todo el archivo en memoria cuando es posible.
+- Si quieres que implemente una versión de "external merge" (ordenamiento por batches y mezcla k-way) puedo hacerlo; dime si quieres que lo haga y cuál es el tamaño típico de los archivos en tu entorno.

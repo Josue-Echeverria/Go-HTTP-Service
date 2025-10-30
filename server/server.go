@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/url"
 	"strings"
 	"sync"
 	"time"
@@ -18,7 +19,7 @@ type HTTPRequest struct {
 	Version string
 	Headers map[string]string
 	Body    string
-	Params  map[string]string
+	Query   url.Values
 }
 
 // HTTPResponse representa una respuesta HTTP
@@ -172,33 +173,19 @@ func (s *Server) parseRequest(conn net.Conn) (*HTTPRequest, error) {
 		return nil, fmt.Errorf("request line inválida")
 	}
 
-	paramsIndex := strings.Index(parts[1], "?")
-
-	// Safely determine the path portion (avoid slicing with -1)
-	path := parts[1]
-	if paramsIndex != -1 {
-		path = parts[1][:paramsIndex]
+	// Parse path and query (if any)
+	rawPath := parts[1]
+	u, err := url.Parse(rawPath)
+	if err != nil {
+		return nil, fmt.Errorf("error parseando path: %w", err)
 	}
 
 	req := &HTTPRequest{
 		Method:  parts[0],
-		Path:    path,
+		Path:    u.Path,
+		Query:   u.Query(),
 		Version: parts[2],
 		Headers: make(map[string]string),
-		Params:  make(map[string]string),
-	}
-
-	if paramsIndex != -1 {
-		// Parsear query string
-		queryString := parts[1][paramsIndex+1:]
-		for _, param := range strings.Split(queryString, "&") {
-			kv := strings.SplitN(param, "=", 2)
-			if len(kv) == 2 {
-				key := strings.TrimSpace(kv[0])
-				value := strings.TrimSpace(kv[1])
-				req.Params[key] = value
-			}
-		}
 	}
 
 	bytesRead := len(requestLine)
