@@ -73,6 +73,11 @@ func (q *TaskQueue) Size() int64 {
 	return int64(len(q.items))
 }
 
+// Capacity retorna la capacidad máxima de la cola
+func (q *TaskQueue) Capacity() int64 {
+	return int64(q.capacity)
+}
+
 // NotEmpty retorna un canal que se señaliza cuando hay elementos
 func (q *TaskQueue) NotEmpty() <-chan struct{} {
 	return q.notEmpty

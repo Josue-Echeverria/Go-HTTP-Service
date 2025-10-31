@@ -48,7 +48,6 @@ func StatusHandler(srv *server.Server) server.HandlerFunc {
 
 		statsJSON, _ := json.MarshalIndent(map[string]interface{}{
 			"status": "ok",
-			"time":   time.Now().Format(time.RFC3339),
 			"stats":  stats,
 		}, "", "  ")
 
@@ -56,6 +55,34 @@ func StatusHandler(srv *server.Server) server.HandlerFunc {
 			StatusCode: 200,
 			StatusText: "OK",
 			Body:       string(statsJSON),
+			Headers: map[string]string{
+				"Content-Type": "application/json",
+			},
+		}
+	}
+}
+
+// MetricsHandler maneja peticiones a /metrics con métricas detalladas
+func MetricsHandler(srv *server.Server) server.HandlerFunc {
+	return func(req *server.HTTPRequest) *server.HTTPResponse {
+		metrics := srv.GetMetrics()
+
+		metricsJSON, err := json.MarshalIndent(metrics, "", "  ")
+		if err != nil {
+			return &server.HTTPResponse{
+				StatusCode: 500,
+				StatusText: "Internal Server Error",
+				Body:       `{"error": "failed to marshal metrics"}`,
+				Headers: map[string]string{
+					"Content-Type": "application/json",
+				},
+			}
+		}
+
+		return &server.HTTPResponse{
+			StatusCode: 200,
+			StatusText: "OK",
+			Body:       string(metricsJSON),
 			Headers: map[string]string{
 				"Content-Type": "application/json",
 			},
@@ -109,6 +136,17 @@ func PingHandler(req *server.HTTPRequest) *server.HTTPResponse {
 		Headers: map[string]string{
 			"Content-Type": "text/plain",
 		},
+	}
+}
+
+// FaviconHandler maneja peticiones a /favicon.ico
+func FaviconHandler(req *server.HTTPRequest) *server.HTTPResponse {
+	// Retornar 204 No Content para favicon (sin ícono)
+	return &server.HTTPResponse{
+		StatusCode: 204,
+		StatusText: "No Content",
+		Body:       "",
+		Headers:    map[string]string{},
 	}
 }
 

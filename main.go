@@ -23,6 +23,8 @@ func main() {
 	// Registrar handlers
 	srv.HandleFunc("GET", "/", handlers.HelloHandler)
 	srv.HandleFunc("GET", "/status", handlers.StatusHandler(srv))
+	srv.HandleFunc("GET", "/metrics", handlers.MetricsHandler(srv))
+	srv.HandleFunc("GET", "/favicon.ico", handlers.FaviconHandler)
 	srv.HandleFunc("GET", "/echo", handlers.EchoHandler)
 	srv.HandleFunc("POST", "/echo", handlers.EchoHandler)
 	srv.HandleFunc("GET", "/ping", handlers.PingHandler)

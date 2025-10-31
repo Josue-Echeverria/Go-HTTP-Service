@@ -33,8 +33,9 @@ type HTTPResponse struct {
 
 // ConnectionTask representa una tarea de conexión a procesar
 type ConnectionTask struct {
-	Conn net.Conn
-	ID   int64
+	Conn        net.Conn
+	ID          int64
+	EnqueueTime time.Time
 }
 
 // Server representa el servidor HTTP
@@ -45,7 +46,9 @@ type Server struct {
 	taskQueue      *TaskQueue
 	connCounter    *Counter
 	activeConns    *Counter
+	busyWorkers    *Counter
 	router         *Router
+	metricsManager *MetricsManager
 	shutdownCh     chan struct{}
 	wg             sync.WaitGroup
 	maxHeaderBytes int
@@ -61,9 +64,11 @@ func NewServer(addr string, poolSize int) *Server {
 		taskQueue:      NewTaskQueue(1000),
 		connCounter:    NewCounter(),
 		activeConns:    NewCounter(),
+		busyWorkers:    NewCounter(),
 		router:         NewRouter(),
+		metricsManager: NewMetricsManager(),
 		shutdownCh:     make(chan struct{}),
-		maxHeaderBytes: 1 << 20, // 1MB
+		maxHeaderBytes: 1 << 20,
 		readTimeout:    30 * time.Second,
 		writeTimeout:   30 * time.Second,
 	}
@@ -113,8 +118,9 @@ func (s *Server) acceptConnections() {
 			s.activeConns.Increment()
 
 			task := ConnectionTask{
-				Conn: conn,
-				ID:   connID,
+				Conn:        conn,
+				ID:          connID,
+				EnqueueTime: time.Now(),
 			}
 
 			// Encolar tarea
@@ -233,6 +239,10 @@ func (s *Server) processConnection(task interface{}) {
 	conn := connTask.Conn
 	connID := connTask.ID
 
+	// Incrementar workers ocupados
+	s.busyWorkers.Increment()
+	defer s.busyWorkers.Decrement()
+
 	defer func() {
 		if r := recover(); r != nil {
 			log.Printf("Panic in connection %d: %v", connID, r)
@@ -241,7 +251,9 @@ func (s *Server) processConnection(task interface{}) {
 		s.activeConns.Decrement()
 	}()
 
-	s.activeConns.Increment()
+	// Calcular tiempo de espera en cola
+	dequeueTime := time.Now()
+	waitTime := dequeueTime.Sub(connTask.EnqueueTime)
 
 	// Configurar timeouts
 	conn.SetReadDeadline(time.Now().Add(s.readTimeout))
@@ -267,8 +279,25 @@ func (s *Server) processConnection(task interface{}) {
 		return
 	}
 
-	// Procesar request con el router
+	// Log para ver qué se está solicitando
+	log.Printf("Connection %d: %s %s", connID, req.Method, req.Path)
+
+	// Obtener métricas para este endpoint
+	endpoint := fmt.Sprintf("%s %s", req.Method, req.Path)
+	metrics := s.metricsManager.GetOrCreate(endpoint)
+
+	// Registrar tiempo de espera en cola
+	metrics.RecordWaitTime(waitTime)
+	metrics.IncrementActive()
+
+	// Medir tiempo de ejecución del handler
+	execStart := time.Now()
 	response := s.router.Handle(req)
+	execDuration := time.Since(execStart)
+
+	// Registrar métricas
+	metrics.RecordExecTime(execDuration)
+	metrics.DecrementActive()
 
 	// Enviar respuesta
 	err = s.sendResponse(conn, response)
@@ -362,4 +391,26 @@ func (s *Server) GetStats() map[string]int64 {
 		"active_connections": s.activeConns.Get(),
 		"queue_size":         s.taskQueue.Size(),
 	}
+}
+
+// GetMetrics retorna métricas detalladas del servidor
+func (s *Server) GetMetrics() map[string]interface{} {
+	stats := s.metricsManager.GetAllStats()
+
+	// Agregar métricas del worker pool
+	stats["worker_pool"] = map[string]interface{}{
+		"size":         s.workerPool.Size(),
+		"busy_workers": s.busyWorkers.Get(),
+		"idle_workers": int64(s.workerPool.Size()) - s.busyWorkers.Get(),
+	}
+
+	// Agregar métricas globales
+	stats["global"] = map[string]interface{}{
+		"total_connections":  s.connCounter.Get(),
+		"active_connections": s.activeConns.Get(),
+		"queue_size":         s.taskQueue.Size(),
+		"queue_capacity":     s.taskQueue.Capacity(),
+	}
+
+	return stats
 }
