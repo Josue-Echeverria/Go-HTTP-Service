@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v1.2.0 (2025-10-31)
+
+### Features
+
+- Job manager for queues
+  ([`77ca4dc`](https://github.com/Josue-Echeverria/Go-HTTP-Service/commit/77ca4dc7110680dd498e17de8b63aa609088656d))
+
+
 ## v1.1.2 (2025-10-31)
 
 ### Bug Fixes
