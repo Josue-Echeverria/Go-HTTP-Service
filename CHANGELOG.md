@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v1.1.2 (2025-10-31)
+
+### Bug Fixes
+
+- Implemented mandelbrot endpoint
+  ([`efd7519`](https://github.com/Josue-Echeverria/Go-HTTP-Service/commit/efd751952762deefd88eba01329ec4fe69378172))
+
+
 ## v1.1.1 (2025-10-30)
 
 ### Bug Fixes
