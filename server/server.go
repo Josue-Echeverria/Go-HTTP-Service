@@ -49,6 +49,7 @@ type Server struct {
 	busyWorkers    *Counter
 	router         *Router
 	metricsManager *MetricsManager
+	jobManager     *JobManager
 	shutdownCh     chan struct{}
 	wg             sync.WaitGroup
 	maxHeaderBytes int
@@ -67,6 +68,7 @@ func NewServer(addr string, poolSize int) *Server {
 		busyWorkers:    NewCounter(),
 		router:         NewRouter(),
 		metricsManager: NewMetricsManager(),
+		jobManager:     NewJobManager(200, 60*time.Second, 120*time.Second, "jobs.json"),
 		shutdownCh:     make(chan struct{}),
 		maxHeaderBytes: 1 << 20,
 		readTimeout:    30 * time.Second,
@@ -365,6 +367,9 @@ func (s *Server) Shutdown(ctx context.Context) error {
 		s.listener.Close()
 	}
 
+	// Detener JobManager
+	s.jobManager.Shutdown()
+
 	// Detener worker pool
 	s.workerPool.Stop()
 
@@ -413,4 +418,9 @@ func (s *Server) GetMetrics() map[string]interface{} {
 	}
 
 	return stats
+}
+
+// GetJobManager retorna el gestor de trabajos
+func (s *Server) GetJobManager() *JobManager {
+	return s.jobManager
 }
