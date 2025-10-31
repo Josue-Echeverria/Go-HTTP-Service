@@ -20,6 +20,10 @@ func main() {
 	// Crear servidor
 	srv := server.NewServer(addr, poolSize)
 
+	// Configurar executor de tareas para JobManager
+	executor := handlers.NewServerTaskExecutor(srv)
+	srv.GetJobManager().SetExecutor(executor)
+
 	// Registrar handlers
 	srv.HandleFunc("GET", "/", handlers.HelloHandler)
 	srv.HandleFunc("GET", "/status", handlers.StatusHandler(srv))
@@ -56,6 +60,13 @@ func main() {
 	srv.HandleFunc("GET", "/grep", handlers.GrepHandler)           // /grep?name=FILE&pattern=REGEX
 	srv.HandleFunc("GET", "/compress", handlers.CompressHandler)   // /compress?name=FILE&codec=gzip|xz
 	srv.HandleFunc("GET", "/hashfile", handlers.HashFileHandler)   // /hashfile?name=FILE&algo=sha256
+
+	// Job Management
+	jm := srv.GetJobManager()
+	srv.HandleFunc("POST", "/jobs/submit", handlers.JobSubmitHandler(jm))   // /jobs/submit?task=isprime&num=999999999999999999&prio=high
+	srv.HandleFunc("GET", "/jobs/status", handlers.JobStatusHandler(jm))    // /jobs/status?id=JOB_ID
+	srv.HandleFunc("GET", "/jobs/result", handlers.JobResultHandler(jm))    // /jobs/result?id=JOB_ID
+	srv.HandleFunc("DELETE", "/jobs/cancel", handlers.JobCancelHandler(jm)) // /jobs/cancel?id=JOB_ID
 
 	// Iniciar servidor
 	if err := srv.Start(); err != nil {
