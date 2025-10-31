@@ -3,7 +3,9 @@ package handlers
 import (
 	"GoDocker/server"
 	"encoding/json"
+	"fmt"
 	"math/big"
+	"os"
 	"strconv"
 )
 
@@ -231,13 +233,95 @@ func PiHandler(req *server.HTTPRequest) *server.HTTPResponse {
 	}
 }
 
-// /mandelbrot?width=W&height=H&max_iter=I
+// /mandelbrot?width=W&height=H&max_iter=I&filename=name
 func MandelbrotHandler(req *server.HTTPRequest) *server.HTTPResponse {
-	// TODO : Implementar handler para generar conjunto de Mandelbrot
+	widthStr, widthOk := req.Params["width"]
+	heightStr, heightOk := req.Params["height"]
+	maxIterStr, maxIterOk := req.Params["max_iter"]
+
+	if !widthOk || !heightOk || !maxIterOk {
+		return &server.HTTPResponse{
+			StatusCode: 400,
+			StatusText: "Bad Request",
+			Body:       `{"error":"missing required query parameters 'width', 'height', and 'max_iter'"}`,
+			Headers: map[string]string{
+				"Content-Type": "application/json",
+			},
+		}
+	}
+
+	width, err := strconv.Atoi(widthStr)
+	if err != nil || width < 1 || width > 2000 {
+		return &server.HTTPResponse{
+			StatusCode: 400,
+			StatusText: "Bad Request",
+			Body:       `{"error":"invalid width; must be an integer between 1 and 2000"}`,
+			Headers: map[string]string{
+				"Content-Type": "application/json",
+			},
+		}
+	}
+
+	height, err := strconv.Atoi(heightStr)
+	if err != nil || height < 1 || height > 2000 {
+		return &server.HTTPResponse{
+			StatusCode: 400,
+			StatusText: "Bad Request",
+			Body:       `{"error":"invalid height; must be an integer between 1 and 2000"}`,
+			Headers: map[string]string{
+				"Content-Type": "application/json",
+			},
+		}
+	}
+
+	maxIter, err := strconv.Atoi(maxIterStr)
+	if err != nil || maxIter < 1 || maxIter > 1000 {
+		return &server.HTTPResponse{
+			StatusCode: 400,
+			StatusText: "Bad Request",
+			Body:       `{"error":"invalid max_iter; must be an integer between 1 and 1000"}`,
+			Headers: map[string]string{
+				"Content-Type": "application/json",
+			},
+		}
+	}
+
+	// Parámetros opcionales
+	filename := req.Params["filename"]
+
+	// Generar conjunto de Mandelbrot
+	iterations := generateMandelbrotSet(width, height, maxIter)
+
+	// Respuesta base
+	response := map[string]interface{}{
+		"width":      width,
+		"height":     height,
+		"max_iter":   maxIter,
+		"iterations": iterations,
+		"stats": map[string]interface{}{
+			"total_pixels":      width * height,
+			"computed_pixels":   len(iterations) * len(iterations[0]),
+			"coordinate_system": "complex plane from -2-2i to 2+2i",
+		},
+	}
+
+	// Si se especifica filename, guardar imagen PGM
+	if filename != "" {
+		err := saveMandelbrotPGM(iterations, width, height, maxIter, filename)
+		if err != nil {
+			response["file_error"] = err.Error()
+		} else {
+			response["saved_file"] = filename + ".pgm"
+			response["file_format"] = "PGM (Portable Gray Map)"
+		}
+	}
+
+	body, _ := json.MarshalIndent(response, "", "  ")
+
 	return &server.HTTPResponse{
-		StatusCode: 400,
+		StatusCode: 200,
 		StatusText: "OK",
-		Body:       `{"message":"Mandelbrot set generated"}`,
+		Body:       string(body),
 		Headers: map[string]string{
 			"Content-Type": "application/json",
 		},
@@ -332,4 +416,82 @@ func generateRandomMatrix(size, seed int) [][]int {
 	}
 
 	return matrix
+}
+
+// generateMandelbrotSet genera el conjunto de Mandelbrot
+func generateMandelbrotSet(width, height, maxIter int) [][]int {
+	iterations := make([][]int, height)
+	for i := range iterations {
+		iterations[i] = make([]int, width)
+	}
+
+	// Mapear coordenadas de píxel a plano complejo
+	// Rango: -2.5 a 1.5 en x, -2.0 a 2.0 en y
+	xMin, xMax := -2.5, 1.5
+	yMin, yMax := -2.0, 2.0
+
+	for py := 0; py < height; py++ {
+		for px := 0; px < width; px++ {
+			// Convertir coordenadas de píxel a coordenadas complejas
+			x := xMin + float64(px)*(xMax-xMin)/float64(width)
+			y := yMin + float64(py)*(yMax-yMin)/float64(height)
+
+			// Calcular iteraciones para el punto (x + yi)
+			iterations[py][px] = mandelbrotIterations(complex(x, y), maxIter)
+		}
+	}
+
+	return iterations
+}
+
+// mandelbrotIterations calcula el número de iteraciones para un punto complejo
+func mandelbrotIterations(c complex128, maxIter int) int {
+	z := complex(0, 0)
+
+	for iter := 0; iter < maxIter; iter++ {
+		// z = z² + c
+		z = z*z + c
+
+		// Si |z| > 2, el punto diverge
+		if real(z)*real(z)+imag(z)*imag(z) > 4.0 {
+			return iter
+		}
+	}
+
+	// Punto está en el conjunto (no diverge)
+	return maxIter
+}
+
+// saveMandelbrotPGM guarda el conjunto de Mandelbrot como imagen PGM
+func saveMandelbrotPGM(iterations [][]int, width, height, maxIter int, filename string) error {
+	file, err := os.Create(filename + ".pgm")
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	// Escribir cabecera PGM
+	fmt.Fprintf(file, "P2\n")
+	fmt.Fprintf(file, "# Mandelbrot Set\n")
+	fmt.Fprintf(file, "%d %d\n", width, height)
+	fmt.Fprintf(file, "255\n")
+
+	// Escribir datos de píxeles
+	for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
+			// Mapear iteraciones a escala de grises (0-255)
+			var grayValue int
+			if iterations[y][x] == maxIter {
+				grayValue = 0 // Negro para puntos en el conjunto
+			} else {
+				// Gradiente para puntos que divergen
+				grayValue = (iterations[y][x] * 255) / maxIter
+			}
+
+			fmt.Fprintf(file, "%d ", grayValue)
+		}
+		fmt.Fprintf(file, "\n")
+	}
+
+	return nil
 }
