@@ -1,7 +1,15 @@
 # CHANGELOG
 
 
+## v1.2.1 (2025-10-31)
+
+
 ## v1.2.0 (2025-10-31)
+
+### Bug Fixes
+
+- Implemented tests for IOBound endpoints
+  ([`5116efe`](https://github.com/Josue-Echeverria/Go-HTTP-Service/commit/5116efe033711f6e681e5f1058386d58f9c5bd03))
 
 ### Features
 
