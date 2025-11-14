@@ -1,7 +1,15 @@
 # CHANGELOG
 
 
+## v1.2.2 (2025-11-14)
+
+
 ## v1.2.1 (2025-10-31)
+
+### Bug Fixes
+
+- Testing files
+  ([`7254ce6`](https://github.com/Josue-Echeverria/Go-HTTP-Service/commit/7254ce6db337aa951229544b2d312e6c56c6f4dc))
 
 
 ## v1.2.0 (2025-10-31)
