@@ -15,7 +15,7 @@ import (
 func main() {
 	// Configuración
 	addr := ":8080"
-	poolSize := 20 // Número de workers en el pool
+	poolSize := 50 // Número de workers en el pool
 
 	// Crear servidor
 	srv := server.NewServer(addr, poolSize)

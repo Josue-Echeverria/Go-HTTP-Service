@@ -48,6 +48,9 @@ func TestHelloHandler(t *testing.T) {
 }
 
 func TestStatusHandler(t *testing.T) {
+	// Create a server instance
+	srv := server.NewServer(":8080", 10)
+
 	// Create a request to test the status endpoint
 	req := &server.HTTPRequest{
 		Method:  "GET",
@@ -58,78 +61,20 @@ func TestStatusHandler(t *testing.T) {
 		Params:  make(map[string]string),
 	}
 
-	// Test by creating a mock handler function that simulates the status response
-	mockHandler := func(req *server.HTTPRequest) *server.HTTPResponse {
-		statsJSON := `{
-  "status": "ok",
-  "time": "2023-01-01T00:00:00Z",
-  "stats": {
-    "active_connections": 5,
-    "queue_size": 10,
-    "total_connections": 100
-  }
-}`
-		return &server.HTTPResponse{
-			StatusCode: 200,
-			StatusText: "OK",
-			Body:       statsJSON,
-			Headers: map[string]string{
-				"Content-Type": "application/json",
-			},
-		}
+	// Use the real StatusHandler with server
+	handler := StatusHandler(srv)
+	resp := handler(req)
+
+	if resp.StatusCode != 200 {
+		t.Errorf("Expected status code 200, got %d", resp.StatusCode)
 	}
 
-	resp := mockHandler(req)
-
-	expectedStatus := 200
-	expectedContentType := "application/json"
-	expectedStatusValue := "ok"
-
-	if resp.StatusCode != expectedStatus {
-		t.Errorf("Expected status code %d, got %d", expectedStatus, resp.StatusCode)
+	if resp.Headers["Content-Type"] != "application/json" {
+		t.Errorf("Expected Content-Type application/json, got %s", resp.Headers["Content-Type"])
 	}
 
-	if resp.Headers["Content-Type"] != expectedContentType {
-		t.Errorf("Expected Content-Type %s, got %s", expectedContentType, resp.Headers["Content-Type"])
-	}
-
-	var jsonResp map[string]interface{}
-	err := json.Unmarshal([]byte(resp.Body), &jsonResp)
-	if err != nil {
-		t.Errorf("Response should be valid JSON: %v", err)
-	}
-
-	if jsonResp["status"] != expectedStatusValue {
-		t.Errorf("Expected status '%s', got %v", expectedStatusValue, jsonResp["status"])
-	}
-}
-
-func TestEchoHandler(t *testing.T) {
-	expectedMethod := "POST"
-	expectedBody := `{"test": "data"}`
-	expectedStatus := 200
-
-	req := &server.HTTPRequest{
-		Method:  expectedMethod,
-		Path:    "/echo",
-		Version: "HTTP/1.1",
-		Headers: map[string]string{"Content-Type": "application/json"},
-		Body:    expectedBody,
-		Params:  make(map[string]string),
-	}
-
-	resp := EchoHandler(req)
-
-	if resp.StatusCode != expectedStatus {
-		t.Errorf("Expected status code %d, got %d", expectedStatus, resp.StatusCode)
-	}
-
-	if !strings.Contains(resp.Body, expectedMethod) {
-		t.Errorf("Response should contain method '%s'", expectedMethod)
-	}
-
-	if !strings.Contains(resp.Body, expectedBody) {
-		t.Errorf("Response should contain body '%s'", expectedBody)
+	if !strings.Contains(resp.Body, "status") || !strings.Contains(resp.Body, "stats") {
+		t.Errorf("Response should contain status and stats information: %s", resp.Body)
 	}
 }
 
@@ -186,5 +131,102 @@ func TestTimeHandler(t *testing.T) {
 		if value, exists := timeData[field]; !exists || value == "" {
 			t.Errorf("Response should contain non-empty '%s' field", field)
 		}
+	}
+}
+
+func TestGetFilePath(t *testing.T) {
+	filename := "test.txt"
+	expectedPath := "pruebas/test.txt"
+
+	result := getFilePath(filename)
+
+	// Normalizar separadores de path para Windows/Linux
+	if !strings.HasSuffix(result, expectedPath) && !strings.HasSuffix(result, "pruebas\\test.txt") {
+		t.Errorf("Expected path to end with %s, got %s", expectedPath, result)
+	}
+}
+
+func TestFaviconHandler(t *testing.T) {
+	req := &server.HTTPRequest{
+		Method:  "GET",
+		Path:    "/favicon.ico",
+		Version: "HTTP/1.1",
+		Headers: make(map[string]string),
+		Body:    "",
+		Params:  make(map[string]string),
+	}
+
+	resp := FaviconHandler(req)
+
+	if resp.StatusCode != 204 {
+		t.Errorf("Expected status code 204, got %d", resp.StatusCode)
+	}
+
+	if resp.Body != "" {
+		t.Errorf("Expected empty body, got %s", resp.Body)
+	}
+}
+
+func TestEchoHandler(t *testing.T) {
+	tests := []struct {
+		name           string
+		method         string
+		headers        map[string]string
+		body           string
+		expectedStatus int
+	}{
+		{
+			name:           "GET request",
+			method:         "GET",
+			headers:        map[string]string{"User-Agent": "test"},
+			body:           "",
+			expectedStatus: 200,
+		},
+		{
+			name:           "POST request",
+			method:         "POST",
+			headers:        map[string]string{"Content-Type": "application/json"},
+			body:           `{"test": "data"}`,
+			expectedStatus: 200,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req := &server.HTTPRequest{
+				Method:  tt.method,
+				Path:    "/echo",
+				Version: "HTTP/1.1",
+				Headers: tt.headers,
+				Body:    tt.body,
+				Params:  make(map[string]string),
+			}
+
+			resp := EchoHandler(req)
+
+			if resp.StatusCode != tt.expectedStatus {
+				t.Errorf("Expected status %d, got %d", tt.expectedStatus, resp.StatusCode)
+			}
+
+			// Verificar que la respuesta contiene el método
+			if !strings.Contains(resp.Body, tt.method) {
+				t.Errorf("Response should contain method '%s'", tt.method)
+			}
+
+			// Verificar que la respuesta contiene el path
+			if !strings.Contains(resp.Body, "/echo") {
+				t.Errorf("Response should contain path '/echo'")
+			}
+
+			// Verificar Content-Type HTML
+			if resp.Headers["Content-Type"] != "text/html; charset=utf-8" {
+				t.Errorf("Expected Content-Type 'text/html; charset=utf-8', got %s", resp.Headers["Content-Type"])
+			}
+
+			// Si hay body, verificar que aparece en la respuesta
+			if tt.body != "" && !strings.Contains(resp.Body, tt.body) {
+				t.Errorf("Response should contain body content '%s'", tt.body)
+			}
+		})
 	}
 }
